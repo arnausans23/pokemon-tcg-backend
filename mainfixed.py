@@ -1,4 +1,4 @@
-from fastapi import FastAPI, HTTPException
+from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 import requests
 import os
@@ -8,7 +8,6 @@ load_dotenv()
 
 app = FastAPI(title="Pokemon TCG Trader Backend")
 
-# CORS para permitir cualquier origen
 app.add_middleware(
     CORSMiddleware,
     allow_origins=["*"],
@@ -30,11 +29,7 @@ def root():
     }
 
 @app.get("/api/search")
-def search_cards(q: str = ""):
-    if not q:
-        return {"data": [], "message": "Please provide a search query"}
-    
-    # Auto-format query if needed
+def search_cards(q: str = "pikachu"):
     if ':' not in q:
         q = f'name:*{q}*'
     
@@ -42,27 +37,25 @@ def search_cards(q: str = ""):
         response = requests.get(
             f"{BASE_URL}/cards",
             headers=HEADERS,
-            params={'q': q, 'pageSize': 20, 'orderBy': '-set.releaseDate'}
+            params={'q': q, 'pageSize': 20}
         )
         
         if response.status_code == 200:
             return response.json()
         else:
-            return {"error": f"API error: {response.status_code}"}
+            return {"error": f"API returned {response.status_code}"}
     except Exception as e:
         return {"error": str(e)}
 
 @app.get("/api/trending")
 def get_trending():
     try:
-        # Get high value cards
         response = requests.get(
             f"{BASE_URL}/cards",
             headers=HEADERS,
             params={
-                'q': 'rarity:"Rare Secret" OR rarity:"Hyper Rare"',
-                'pageSize': 10,
-                'orderBy': '-set.releaseDate'
+                'q': 'rarity:"Rare Secret"',
+                'pageSize': 10
             }
         )
         
@@ -78,7 +71,7 @@ def get_sets():
         response = requests.get(
             f"{BASE_URL}/sets",
             headers=HEADERS,
-            params={'pageSize': 20, 'orderBy': '-releaseDate'}
+            params={'pageSize': 20}
         )
         
         if response.status_code == 200:
